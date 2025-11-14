@@ -1,0 +1,6 @@
+@SistemaDeGestionTalento_HostAddress = http://localhost:5155
+
+GET {{SistemaDeGestionTalento_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
