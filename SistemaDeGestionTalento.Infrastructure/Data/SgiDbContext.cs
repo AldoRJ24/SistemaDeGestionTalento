@@ -1,5 +1,4 @@
-﻿
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SistemaDeGestionTalento.Core.Entities;
 using System.Collections.Generic;
 using System.Reflection.Emit;
@@ -73,6 +72,80 @@ namespace SistemaDeGestionTalento.Infrastructure.Data
             modelBuilder.Entity<VacanteSkill>()
                 .HasIndex(vs => new { vs.VacanteId, vs.SkillId })
                 .IsUnique();
+
+            // --- Configurar DeleteBehavior para evitar ciclos (Error 1785) ---
+            // Estrategia: Restrict para todo lo que pueda causar conflictos
+
+            // ColaboradorSkill
+            modelBuilder.Entity<ColaboradorSkill>()
+                .HasOne(cs => cs.Usuario)
+                .WithMany(u => u.ColaboradorSkills)
+                .HasForeignKey(cs => cs.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ColaboradorSkill>()
+                .HasOne(cs => cs.Skill)
+                .WithMany(s => s.ColaboradorSkills) // Corrected from Colaboradores
+                .HasForeignKey(cs => cs.SkillId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ColaboradorSkill>()
+                .HasOne(cs => cs.NivelSkill)
+                .WithMany()
+                .HasForeignKey(cs => cs.NivelId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // VacanteSkill
+            modelBuilder.Entity<VacanteSkill>()
+                .HasOne(vs => vs.Vacante)
+                .WithMany(v => v.VacanteSkills)
+                .HasForeignKey(vs => vs.VacanteId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<VacanteSkill>()
+                .HasOne(vs => vs.Skill)
+                .WithMany(s => s.VacanteSkills) // Corrected from Vacantes
+                .HasForeignKey(vs => vs.SkillId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<VacanteSkill>()
+                .HasOne(vs => vs.NivelSkill)
+                .WithMany()
+                .HasForeignKey(vs => vs.NivelId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Certificacion
+            modelBuilder.Entity<Certificacion>()
+                .HasOne(c => c.Usuario)
+                .WithMany(u => u.Certificaciones)
+                .HasForeignKey(c => c.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Matching
+            modelBuilder.Entity<Matching>()
+                .HasOne(m => m.Vacante)
+                .WithMany(v => v.Matchings)
+                .HasForeignKey(m => m.VacanteId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Matching>()
+                .HasOne(m => m.Usuario)
+                .WithMany(u => u.Matchings)
+                .HasForeignKey(m => m.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Notificacion
+            modelBuilder.Entity<Notificacion>()
+                .HasOne(n => n.Vacante)
+                .WithMany(v => v.Notificaciones)
+                .HasForeignKey(n => n.VacanteId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Notificacion>()
+                .HasOne(n => n.Usuario)
+                .WithMany(u => u.Notificaciones)
+                .HasForeignKey(n => n.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

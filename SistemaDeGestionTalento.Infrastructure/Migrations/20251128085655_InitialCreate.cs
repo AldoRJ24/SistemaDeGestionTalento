@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace SistemaDeGestionTalento.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialMigration : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -127,7 +127,7 @@ namespace SistemaDeGestionTalento.Infrastructure.Migrations
                         column: x => x.UsuarioId,
                         principalTable: "usuarios",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -150,13 +150,13 @@ namespace SistemaDeGestionTalento.Infrastructure.Migrations
                         column: x => x.nivel_id,
                         principalTable: "niveles_skill",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_colaboradores_skills_skills_skill_id",
                         column: x => x.skill_id,
                         principalTable: "skills",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_colaboradores_skills_usuarios_evaluador_id",
                         column: x => x.evaluador_id,
@@ -168,7 +168,7 @@ namespace SistemaDeGestionTalento.Infrastructure.Migrations
                         column: x => x.usuario_id,
                         principalTable: "usuarios",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -246,13 +246,13 @@ namespace SistemaDeGestionTalento.Infrastructure.Migrations
                         column: x => x.UsuarioId,
                         principalTable: "usuarios",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_matching_vacantes_VacanteId",
                         column: x => x.VacanteId,
                         principalTable: "vacantes",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -275,13 +275,13 @@ namespace SistemaDeGestionTalento.Infrastructure.Migrations
                         column: x => x.UsuarioId,
                         principalTable: "usuarios",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_notificaciones_vacantes_VacanteId",
                         column: x => x.VacanteId,
                         principalTable: "vacantes",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -302,19 +302,19 @@ namespace SistemaDeGestionTalento.Infrastructure.Migrations
                         column: x => x.nivel_id,
                         principalTable: "niveles_skill",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_vacante_skills_skills_skill_id",
                         column: x => x.skill_id,
                         principalTable: "skills",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_vacante_skills_vacantes_vacante_id",
                         column: x => x.vacante_id,
                         principalTable: "vacantes",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateIndex(

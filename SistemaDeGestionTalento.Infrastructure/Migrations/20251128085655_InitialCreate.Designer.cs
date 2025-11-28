@@ -12,8 +12,8 @@ using SistemaDeGestionTalento.Infrastructure.Data;
 namespace SistemaDeGestionTalento.Infrastructure.Migrations
 {
     [DbContext(typeof(SgiDbContext))]
-    [Migration("20251128032445_InitialMigration")]
-    partial class InitialMigration
+    [Migration("20251128085655_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -431,7 +431,7 @@ namespace SistemaDeGestionTalento.Infrastructure.Migrations
                     b.HasOne("SistemaDeGestionTalento.Core.Entities.Usuario", "Usuario")
                         .WithMany("Certificaciones")
                         .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Usuario");
@@ -447,19 +447,19 @@ namespace SistemaDeGestionTalento.Infrastructure.Migrations
                     b.HasOne("SistemaDeGestionTalento.Core.Entities.NivelSkill", "NivelSkill")
                         .WithMany()
                         .HasForeignKey("NivelId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("SistemaDeGestionTalento.Core.Entities.Skill", "Skill")
                         .WithMany("ColaboradorSkills")
                         .HasForeignKey("SkillId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("SistemaDeGestionTalento.Core.Entities.Usuario", "Usuario")
                         .WithMany("ColaboradorSkills")
                         .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Evaluador");
@@ -495,13 +495,13 @@ namespace SistemaDeGestionTalento.Infrastructure.Migrations
                     b.HasOne("SistemaDeGestionTalento.Core.Entities.Usuario", "Usuario")
                         .WithMany("Matchings")
                         .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("SistemaDeGestionTalento.Core.Entities.Vacante", "Vacante")
                         .WithMany("Matchings")
                         .HasForeignKey("VacanteId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Usuario");
@@ -514,13 +514,13 @@ namespace SistemaDeGestionTalento.Infrastructure.Migrations
                     b.HasOne("SistemaDeGestionTalento.Core.Entities.Usuario", "Usuario")
                         .WithMany("Notificaciones")
                         .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("SistemaDeGestionTalento.Core.Entities.Vacante", "Vacante")
                         .WithMany("Notificaciones")
                         .HasForeignKey("VacanteId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Usuario");
@@ -561,19 +561,19 @@ namespace SistemaDeGestionTalento.Infrastructure.Migrations
                     b.HasOne("SistemaDeGestionTalento.Core.Entities.NivelSkill", "NivelSkill")
                         .WithMany()
                         .HasForeignKey("NivelId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("SistemaDeGestionTalento.Core.Entities.Skill", "Skill")
                         .WithMany("VacanteSkills")
                         .HasForeignKey("SkillId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("SistemaDeGestionTalento.Core.Entities.Vacante", "Vacante")
                         .WithMany("VacanteSkills")
                         .HasForeignKey("VacanteId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("NivelSkill");
