@@ -20,6 +20,10 @@ namespace SistemaDeGestionTalento.Core.Entities
 
         [StringLength(150)]
         public string? Entidad { get; set; }
+
+        [StringLength(500)]
+        public string? Url { get; set; }
+
         public DateTime? FechaObtencion { get; set; }
     }
 }

@@ -41,8 +41,33 @@ namespace SistemaDeGestionTalento.Core.Entities
 
         public bool Disponibilidad { get; set; } = true;
 
+        [Column("open_to_work")]
+        public bool OpenToWork { get; set; } = false;
+
+        [Column("descripcion_perfil")]
+        public string? DescripcionPerfil { get; set; }
+
+        [Column("foto_perfil")]
+        public string? FotoPerfil { get; set; }
+
         [Column("fecha_creacion")]
         public DateTime FechaCreacion { get; set; } = DateTime.Now;
+
+        // --- Audit Fields ---
+        [StringLength(100)]
+        [Column("created_by")]
+        public string? CreatedBy { get; set; }
+
+        [StringLength(100)]
+        [Column("updated_by")]
+        public string? UpdatedBy { get; set; }
+
+        [StringLength(100)]
+        [Column("validated_by")]
+        public string? ValidatedBy { get; set; }
+
+        [Column("timestamp")]
+        public DateTime? Timestamp { get; set; }
 
         // --- Propiedades de Navegación ---
 

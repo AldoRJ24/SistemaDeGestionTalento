@@ -6,6 +6,7 @@ using SistemaDeGestionTalento.Infrastructure.Repositories;
 using SistemaDeGestionTalento.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using SistemaDeGestionTalento.Core.Entities;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -51,9 +52,62 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is missing")))
     };
 });
-// -----------------------------
+
+// --- CORS (Para permitir que el Frontend en otro puerto se conecte) ---
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        builder =>
+        {
+            builder.AllowAnyOrigin()
+                   .AllowAnyMethod()
+                   .AllowAnyHeader();
+        });
+});
 
 var app = builder.Build();
+
+// --- SEEDING DE DATOS (Roles) ---
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<SgiDbContext>();
+    // context.Database.EnsureCreated(); // Opcional: si quieres asegurar que la DB exista
+
+    if (!context.Roles.Any())
+    {
+        context.Roles.AddRange(
+            new Rol { Nombre = "Lider" },
+            new Rol { Nombre = "Colaborador" },
+            new Rol { Nombre = "AdminRRHH" }
+        );
+        context.SaveChanges();
+    }
+
+    if (!context.NivelesSkill.Any())
+    {
+        context.NivelesSkill.AddRange(
+            new NivelSkill { Nombre = "Básico", Orden = 1 },
+            new NivelSkill { Nombre = "Intermedio", Orden = 2 },
+            new NivelSkill { Nombre = "Avanzado", Orden = 3 },
+            new NivelSkill { Nombre = "Experto", Orden = 4 }
+        );
+        context.SaveChanges();
+    }
+
+    if (!context.Skills.Any())
+    {
+        context.Skills.AddRange(
+            new Skill { Nombre = "C#", Categoria = "Tecnica" },
+            new Skill { Nombre = "Python", Categoria = "Tecnica" },
+            new Skill { Nombre = "Vue.js", Categoria = "Tecnica" },
+            new Skill { Nombre = "SQL Server", Categoria = "Tecnica" },
+            new Skill { Nombre = "Liderazgo", Categoria = "Blanda" },
+            new Skill { Nombre = "Comunicación Efectiva", Categoria = "Blanda" },
+            new Skill { Nombre = "Trabajo en Equipo", Categoria = "Blanda" }
+        );
+        context.SaveChanges();
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -62,7 +116,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
+
+app.UseCors("AllowAll"); // <--- IMPORTANTE: Habilitar CORS
 
 app.UseAuthentication();
 app.UseAuthorization();

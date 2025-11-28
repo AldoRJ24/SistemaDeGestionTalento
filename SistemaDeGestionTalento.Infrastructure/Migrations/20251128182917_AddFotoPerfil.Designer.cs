@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SistemaDeGestionTalento.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using SistemaDeGestionTalento.Infrastructure.Data;
 namespace SistemaDeGestionTalento.Infrastructure.Migrations
 {
     [DbContext(typeof(SgiDbContext))]
-    partial class SgiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251128182917_AddFotoPerfil")]
+    partial class AddFotoPerfil
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -63,11 +66,6 @@ namespace SistemaDeGestionTalento.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Estado")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
 
                     b.Property<int?>("EvaluadorId")
                         .HasColumnType("int")
@@ -208,10 +206,6 @@ namespace SistemaDeGestionTalento.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Estado")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("datetime2");
 
@@ -219,10 +213,6 @@ namespace SistemaDeGestionTalento.Infrastructure.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("Mensaje")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Tipo")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

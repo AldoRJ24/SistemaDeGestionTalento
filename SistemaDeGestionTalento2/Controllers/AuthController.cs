@@ -53,21 +53,43 @@ namespace SistemaDeGestionTalento.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<string>> Login(LoginDto request)
         {
-            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Correo == request.Email);
-
-            if (usuario == null)
+            try
             {
-                return BadRequest("Usuario no encontrado.");
-            }
+                var usuario = await _context.Usuarios
+                    .Include(u => u.Rol)
+                    .FirstOrDefaultAsync(u => u.Correo == request.Email);
 
-            if (usuario.ContraseñaHash != HashPassword(request.Password))
+                if (usuario == null)
+                {
+                    return BadRequest("Usuario no encontrado.");
+                }
+
+                if (usuario.ContraseñaHash != HashPassword(request.Password))
+                {
+                    return BadRequest("Contraseña incorrecta.");
+                }
+
+                string token = CreateToken(usuario);
+
+                return Ok(new
+                {
+                    token,
+                    user = new
+                    {
+                        id = usuario.Id,
+                        nombre = usuario.Nombre,
+                        apellido = usuario.Apellido,
+                        email = usuario.Correo,
+                        role = usuario.Rol.Nombre
+                    }
+                });
+            }
+            catch (Exception ex)
             {
-                return BadRequest("Contraseña incorrecta.");
+                Console.WriteLine($"Error en Login: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+                return StatusCode(500, "Error interno del servidor: " + ex.Message);
             }
-
-            string token = CreateToken(usuario);
-
-            return Ok(token);
         }
 
         private string HashPassword(string password)
@@ -89,7 +111,7 @@ namespace SistemaDeGestionTalento.Controllers
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetSection("Jwt:Key").Value ?? throw new InvalidOperationException("JWT Key is missing")));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
 
             var token = new JwtSecurityToken(
                 issuer: _configuration.GetSection("Jwt:Issuer").Value ?? throw new InvalidOperationException("JWT Issuer is missing"),

@@ -1,6 +1,4 @@
-﻿// Archivo: DTOs/CrearVacanteDto.cs
-
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace SistemaDeGestionTalento.DTOs
 {
@@ -19,5 +17,7 @@ namespace SistemaDeGestionTalento.DTOs
         public int? UrgenciaId { get; set; }
 
         public DateTime? FechaInicioRequerida { get; set; }
+
+        public List<VacanteSkillDto> Skills { get; set; } = new List<VacanteSkillDto>();
     }
 }

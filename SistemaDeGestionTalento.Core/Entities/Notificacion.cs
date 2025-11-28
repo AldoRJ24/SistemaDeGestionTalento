@@ -23,5 +23,8 @@ namespace SistemaDeGestionTalento.Core.Entities
 
         public DateTime Fecha { get; set; } = DateTime.Now;
         public bool Leido { get; set; } = false;
+
+        public string Tipo { get; set; } = "General"; // General, Invitacion
+        public string Estado { get; set; } = "Enviada"; // Enviada, Aceptada, Rechazada
     }
 }

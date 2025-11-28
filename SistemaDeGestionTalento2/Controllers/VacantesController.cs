@@ -28,7 +28,12 @@ namespace SistemaDeGestionTalento.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Vacante>> GetVacante(int id)
         {
-            var vacante = await _context.Vacantes.FindAsync(id);
+            var vacante = await _context.Vacantes
+                .Include(v => v.VacanteSkills)
+                    .ThenInclude(vs => vs.Skill)
+                .Include(v => v.VacanteSkills)
+                    .ThenInclude(vs => vs.NivelSkill)
+                .FirstOrDefaultAsync(v => v.Id == id);
 
             if (vacante == null)
             {
@@ -37,7 +42,13 @@ namespace SistemaDeGestionTalento.Controllers
 
             return vacante;
         }
-        // --- PEGA ESTE MÉTODO DENTRO DE TU CLASE VacantesController ---
+
+        // GET: api/Vacantes/urgencias
+        [HttpGet("urgencias")]
+        public async Task<ActionResult<IEnumerable<UrgenciaVacante>>> GetUrgencias()
+        {
+            return await _context.UrgenciasVacante.ToListAsync();
+        }
 
         // POST: api/Vacantes/1/skills
         [HttpPost("{id}/skills")]
@@ -95,16 +106,41 @@ namespace SistemaDeGestionTalento.Controllers
         // -----------------------------------------------------------------
 
         // PUT: api/Vacantes/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutVacante(int id, Vacante vacante)
+        public async Task<IActionResult> PutVacante(int id, CrearVacanteDto vacanteDto)
         {
-            if (id != vacante.Id)
+            var vacanteExistente = await _context.Vacantes
+                .Include(v => v.VacanteSkills)
+                .FirstOrDefaultAsync(v => v.Id == id);
+
+            if (vacanteExistente == null)
             {
-                return BadRequest();
+                return NotFound();
             }
 
-            _context.Entry(vacante).State = EntityState.Modified;
+            // Actualizar campos básicos
+            vacanteExistente.Titulo = vacanteDto.Titulo;
+            vacanteExistente.Proyecto = vacanteDto.Proyecto;
+            vacanteExistente.UrgenciaId = vacanteDto.UrgenciaId;
+            vacanteExistente.FechaInicioRequerida = vacanteDto.FechaInicioRequerida;
+
+            // Actualizar Skills
+            // 1. Eliminar skills existentes
+            _context.VacanteSkills.RemoveRange(vacanteExistente.VacanteSkills);
+
+            // 2. Agregar nuevos skills
+            if (vacanteDto.Skills != null && vacanteDto.Skills.Any())
+            {
+                foreach (var skillDto in vacanteDto.Skills)
+                {
+                    _context.VacanteSkills.Add(new VacanteSkill
+                    {
+                        VacanteId = id,
+                        SkillId = skillDto.SkillId,
+                        NivelId = skillDto.NivelId
+                    });
+                }
+            }
 
             try
             {
@@ -152,6 +188,22 @@ namespace SistemaDeGestionTalento.Controllers
             _context.Vacantes.Add(nuevaVacante);
             await _context.SaveChangesAsync();
 
+            // Guardar Skills Requeridos
+            if (vacanteDto.Skills != null && vacanteDto.Skills.Any())
+            {
+                foreach (var skillDto in vacanteDto.Skills)
+                {
+                    var vacanteSkill = new VacanteSkill
+                    {
+                        VacanteId = nuevaVacante.Id,
+                        SkillId = skillDto.SkillId,
+                        NivelId = skillDto.NivelId
+                    };
+                    _context.VacanteSkills.Add(vacanteSkill);
+                }
+                await _context.SaveChangesAsync();
+            }
+
             // Devolvemos el objeto completo, no el DTO
             // (Esto causará el error de "Ciclo Infinito" que arreglamos en Program.cs)
             return CreatedAtAction("GetVacante", new { id = nuevaVacante.Id }, nuevaVacante);
@@ -161,16 +213,44 @@ namespace SistemaDeGestionTalento.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteVacante(int id)
         {
-            var vacante = await _context.Vacantes.FindAsync(id);
-            if (vacante == null)
+            try
             {
-                return NotFound();
+                var vacante = await _context.Vacantes
+                    .Include(v => v.VacanteSkills)
+                    .Include(v => v.Matchings)
+                    .Include(v => v.Notificaciones)
+                    .FirstOrDefaultAsync(v => v.Id == id);
+
+                if (vacante == null)
+                {
+                    return NotFound();
+                }
+
+                // Eliminar relaciones manualmente para evitar error de FK (Restrict)
+                if (vacante.VacanteSkills.Any())
+                    _context.VacanteSkills.RemoveRange(vacante.VacanteSkills);
+                
+                if (vacante.Matchings.Any())
+                    _context.Matchings.RemoveRange(vacante.Matchings);
+
+                if (vacante.Notificaciones.Any())
+                    _context.Notificaciones.RemoveRange(vacante.Notificaciones);
+
+                _context.Vacantes.Remove(vacante);
+                await _context.SaveChangesAsync();
+
+                return NoContent();
             }
-
-            _context.Vacantes.Remove(vacante);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                // Log the exception (console for now)
+                Console.WriteLine($"Error deleting vacancy: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");
+                }
+                return StatusCode(500, new { message = $"Error interno al eliminar la vacante: {ex.Message}" });
+            }
         }
 
         private bool VacanteExists(int id)

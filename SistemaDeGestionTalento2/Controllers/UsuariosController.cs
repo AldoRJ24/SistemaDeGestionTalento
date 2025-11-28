@@ -25,10 +25,18 @@ namespace SistemaDeGestionTalento.Controllers
         }
 
         // GET: api/Usuarios/5
+        // GET: api/Usuarios/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Usuario>> GetUsuario(int id)
         {
-            var usuario = await _context.Usuarios.FindAsync(id);
+            var usuario = await _context.Usuarios
+                .Include(u => u.Rol)
+                .Include(u => u.ColaboradorSkills)
+                    .ThenInclude(cs => cs.Skill)
+                .Include(u => u.ColaboradorSkills)
+                    .ThenInclude(cs => cs.NivelSkill)
+                .Include(u => u.Certificaciones)
+                .FirstOrDefaultAsync(u => u.Id == id);
 
             if (usuario == null)
             {
@@ -37,7 +45,69 @@ namespace SistemaDeGestionTalento.Controllers
 
             return usuario;
         }
-        // --- PEGA ESTE MÉTODO DENTRO DE TU CLASE UsuariosController ---
+
+        // PUT: api/Usuarios/5/opentowork
+        [HttpPut("{id}/opentowork")]
+        public async Task<IActionResult> UpdateOpenToWork(int id, [FromBody] OpenToWorkDto dto)
+        {
+            var usuario = await _context.Usuarios.FindAsync(id);
+            if (usuario == null) return NotFound();
+
+            usuario.OpenToWork = dto.OpenToWork;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Estado OpenToWork actualizado", openToWork = usuario.OpenToWork });
+        }
+
+        // POST: api/Usuarios/5/certificaciones
+        [HttpPost("{id}/certificaciones")]
+        public async Task<IActionResult> AddCertificacion(int id, [FromBody] CertificacionDto dto)
+        {
+            var usuario = await _context.Usuarios.FindAsync(id);
+            if (usuario == null) return NotFound();
+
+            var certificacion = new Certificacion
+            {
+                UsuarioId = id,
+                Nombre = dto.Nombre,
+                Entidad = dto.Entidad,
+                Url = dto.Url,
+                FechaObtencion = dto.FechaObtencion
+            };
+
+            _context.Certificaciones.Add(certificacion);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Certificación agregada", certificacion });
+        }
+
+        // PUT: api/Usuarios/5/certificaciones/1
+        [HttpPut("{id}/certificaciones/{certId}")]
+        public async Task<IActionResult> UpdateCertificacion(int id, int certId, [FromBody] CertificacionDto dto)
+        {
+            var certificacion = await _context.Certificaciones.FirstOrDefaultAsync(c => c.Id == certId && c.UsuarioId == id);
+            if (certificacion == null) return NotFound();
+
+            certificacion.Nombre = dto.Nombre;
+            certificacion.Entidad = dto.Entidad;
+            certificacion.Url = dto.Url;
+            certificacion.FechaObtencion = dto.FechaObtencion;
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Certificación actualizada", certificacion });
+        }
+
+        // DELETE: api/Usuarios/5/certificaciones/1
+        [HttpDelete("{id}/certificaciones/{certId}")]
+        public async Task<IActionResult> DeleteCertificacion(int id, int certId)
+        {
+            var certificacion = await _context.Certificaciones.FirstOrDefaultAsync(c => c.Id == certId && c.UsuarioId == id);
+            if (certificacion == null) return NotFound();
+
+            _context.Certificaciones.Remove(certificacion);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Certificación eliminada" });
+        }
 
         // POST: api/Usuarios/5/skills
         [HttpPost("{id}/skills")]
@@ -106,7 +176,24 @@ namespace SistemaDeGestionTalento.Controllers
             return Ok(new { message = "Skill asignado/actualizado correctamente" });
         }
 
-        // -----------------------------------------------------------------
+        [HttpPut("{id}/profile")]
+        public async Task<IActionResult> UpdateProfile(int id, [FromBody] UpdateUserProfileDto dto)
+        {
+            var usuario = await _context.Usuarios.FindAsync(id);
+            if (usuario == null) return NotFound();
+
+            usuario.Nombre = dto.Nombre ?? usuario.Nombre;
+            usuario.Apellido = dto.Apellido ?? usuario.Apellido;
+            usuario.PuestoActual = dto.PuestoActual;
+            usuario.DescripcionPerfil = dto.DescripcionPerfil;
+            usuario.FotoPerfil = dto.FotoPerfil;
+            usuario.UpdatedBy = usuario.Correo; // Audit
+            usuario.Timestamp = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Perfil actualizado", usuario });
+        }
 
         // PUT: api/Usuarios/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754

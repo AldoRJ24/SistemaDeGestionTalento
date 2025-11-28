@@ -28,6 +28,9 @@ namespace SistemaDeGestionTalento.Core.Entities
         [Column("fecha_evaluacion")]
         public DateTime FechaEvaluacion { get; set; } = DateTime.Now;
 
+        [StringLength(20)]
+        public string Estado { get; set; } = "Pendiente"; // Pendiente, Validado, Rechazado
+
         [ForeignKey("Evaluador")]
         [Column("evaluador_id")]
         public int? EvaluadorId { get; set; }
