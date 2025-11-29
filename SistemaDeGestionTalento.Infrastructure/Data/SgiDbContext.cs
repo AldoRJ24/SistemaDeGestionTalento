@@ -139,6 +139,7 @@ namespace SistemaDeGestionTalento.Infrastructure.Data
                 .HasOne(n => n.Vacante)
                 .WithMany(v => v.Notificaciones)
                 .HasForeignKey(n => n.VacanteId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Notificacion>()

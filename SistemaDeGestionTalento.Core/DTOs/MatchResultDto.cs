@@ -15,5 +15,6 @@ namespace SistemaDeGestionTalento.Core.DTOs
 
         public List<string> SkillsCoincidentes { get; set; } = new List<string>();
         public List<string> SkillsFaltantes { get; set; } = new List<string>();
+        public List<SkillMatchDetailDto> SkillDetails { get; set; } = new List<SkillMatchDetailDto>();
     }
 }

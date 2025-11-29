@@ -148,6 +148,47 @@ namespace SistemaDeGestionTalento.Controllers
 
             return Ok(new { message = "Invitación enviada correctamente" });
         }
+
+        // DELETE: api/Lider/team/5
+        [HttpDelete("team/{colaboradorId}")]
+        public async Task<IActionResult> RemoveCollaborator(int colaboradorId)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return Unauthorized();
+            int liderId = int.Parse(userIdClaim.Value);
+
+            // Buscar la relación
+            var relacion = await _context.LiderColaborador
+                .FirstOrDefaultAsync(lc => lc.LiderId == liderId && lc.ColaboradorId == colaboradorId);
+
+            if (relacion == null)
+            {
+                return NotFound("El colaborador no está en tu equipo.");
+            }
+
+            // Obtener nombre del líder para la notificación
+            var lider = await _context.Usuarios.FindAsync(liderId);
+            string nombreLider = lider != null ? $"{lider.Nombre} {lider.Apellido}" : "Tu líder";
+
+            // Eliminar relación
+            _context.LiderColaborador.Remove(relacion);
+
+            // Crear notificación
+            var notificacion = new Notificacion
+            {
+                UsuarioId = colaboradorId,
+                Mensaje = $"Has sido eliminado del equipo del líder {nombreLider}.",
+                Tipo = "Expulsion",
+                Estado = "Enviada",
+                Fecha = DateTime.Now,
+                Leido = false
+            };
+            _context.Notificaciones.Add(notificacion);
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Colaborador eliminado del equipo correctamente." });
+        }
     }
 
     public class InviteCandidateDto

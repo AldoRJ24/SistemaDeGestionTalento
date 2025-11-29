@@ -58,7 +58,8 @@ namespace SistemaDeGestionTalento.Infrastructure.Services
                         ScoreHabilidadesBlandas = Math.Round(score.Blando, 1),
                         ScoreSeniority = Math.Round(score.Seniority, 1),
                         SkillsCoincidentes = score.Coincidentes,
-                        SkillsFaltantes = score.Faltantes
+                        SkillsFaltantes = score.Faltantes,
+                        SkillDetails = score.Details
                     });
                 }
             }
@@ -66,7 +67,7 @@ namespace SistemaDeGestionTalento.Infrastructure.Services
             return resultados.OrderByDescending(r => r.PorcentajeCoincidencia);
         }
 
-        private (double Total, double Tecnico, double Blando, double Seniority, List<string> Coincidentes, List<string> Faltantes) CalcularScore(Vacante vacante, Usuario candidato)
+        private (double Total, double Tecnico, double Blando, double Seniority, List<string> Coincidentes, List<string> Faltantes, List<SkillMatchDetailDto> Details) CalcularScore(Vacante vacante, Usuario candidato)
         {
             double puntajeTecnico = 0;
             double puntajeBlando = 0;
@@ -77,66 +78,83 @@ namespace SistemaDeGestionTalento.Infrastructure.Services
 
             var coincidentes = new List<string>();
             var faltantes = new List<string>();
+            var details = new List<SkillMatchDetailDto>();
 
-            // 1. Skills Técnicos (70%)
-            if (skillsTecnicosReq.Any())
+            // Helper para procesar skills
+            void ProcesarSkill(VacanteSkill req, bool esTecnico)
             {
-                int matches = 0;
-                foreach (var req in skillsTecnicosReq)
+                var tieneSkill = candidato.ColaboradorSkills.FirstOrDefault(cs => cs.SkillId == req.SkillId);
+                var detail = new SkillMatchDetailDto
                 {
-                    var tieneSkill = candidato.ColaboradorSkills.FirstOrDefault(cs => cs.SkillId == req.SkillId);
-                    if (tieneSkill != null)
+                    SkillNombre = req.Skill.Nombre,
+                    NivelRequerido = req.NivelSkill.Nombre
+                };
+
+                if (tieneSkill != null)
+                {
+                    detail.NivelCandidato = tieneSkill.NivelSkill.Nombre;
+                    coincidentes.Add(req.Skill.Nombre);
+
+                    // Calcular porcentaje
+                    if (tieneSkill.NivelSkill.Orden >= req.NivelSkill.Orden)
                     {
-                        matches++;
-                        // Bonus por Seniority (20% del total)
-                        if (tieneSkill.NivelSkill.Orden >= req.NivelSkill.Orden)
-                        {
-                            puntajeSeniority += (100.0 / skillsTecnicosReq.Count);
-                        }
-                        coincidentes.Add(req.Skill.Nombre);
+                        detail.Porcentaje = 100;
+                        detail.Color = "green";
+                        if (esTecnico) puntajeSeniority += (100.0 / skillsTecnicosReq.Count);
                     }
                     else
                     {
-                        faltantes.Add(req.Skill.Nombre);
+                        // Regla de 3 simple basada en el orden
+                        // Ejemplo: Req=3 (Avanzado), Tiene=1 (Básico) -> 1/3 = 33%
+                        detail.Porcentaje = Math.Round(((double)tieneSkill.NivelSkill.Orden / req.NivelSkill.Orden) * 100, 0);
+                        
+                        if (detail.Porcentaje >= 66) detail.Color = "green"; // Casi cumple
+                        else if (detail.Porcentaje >= 33) detail.Color = "orange"; // Parcial
+                        else detail.Color = "red"; // Muy bajo
                     }
                 }
-                puntajeTecnico = (double)matches / skillsTecnicosReq.Count * 100;
-            }
-            else
-            {
-                puntajeTecnico = 100; // Si no pide técnicos, tiene el 100% de ese rubro
-                puntajeSeniority = 100;
-            }
-
-            // 2. Skills Blandos (10%)
-            if (skillsBlandosReq.Any())
-            {
-                int matches = 0;
-                foreach (var req in skillsBlandosReq)
+                else
                 {
-                    if (candidato.ColaboradorSkills.Any(cs => cs.SkillId == req.SkillId))
-                    {
-                        matches++;
-                        coincidentes.Add(req.Skill.Nombre);
-                    }
-                    else
-                    {
-                        faltantes.Add(req.Skill.Nombre);
-                    }
+                    detail.NivelCandidato = "Ninguno";
+                    detail.Porcentaje = 0;
+                    detail.Color = "red";
+                    faltantes.Add(req.Skill.Nombre);
                 }
-                puntajeBlando = (double)matches / skillsBlandosReq.Count * 100;
+                details.Add(detail);
+            }
+
+            // 1. Procesar todos los skills (Técnicos y Blandos juntos)
+            var allSkillsReq = vacante.VacanteSkills.ToList();
+            double sumPercentages = 0;
+
+            if (allSkillsReq.Any())
+            {
+                foreach (var req in allSkillsReq)
+                {
+                    // Determinar si es técnico solo para estadísticas internas si se requiere, 
+                    // pero para el total usamos la misma lógica.
+                    bool esTecnico = req.Skill.Categoria == "Tecnica";
+                    ProcesarSkill(req, esTecnico);
+                }
+
+                // Sumar los porcentajes calculados en ProcesarSkill
+                sumPercentages = details.Sum(d => d.Porcentaje);
             }
             else
             {
-                puntajeBlando = 100;
+                // Si no hay skills requeridos, asumimos 100% de coincidencia (o 0%, según negocio, pero 100 es más amigable si no hay requisitos)
+                return (100, 100, 100, 100, coincidentes, faltantes, details);
             }
 
-            // Ponderación Final
-            // Tecnico 70%, Seniority 20%, Blando 10%
-            // Nota: El Seniority se calculó basado en los skills técnicos coincidentes que cumplen el nivel
-            double total = (puntajeTecnico * 0.7) + (puntajeSeniority * 0.2) + (puntajeBlando * 0.1);
+            // Cálculo Final: Promedio Simple
+            double total = sumPercentages / allSkillsReq.Count;
 
-            return (total, puntajeTecnico, puntajeBlando, puntajeSeniority, coincidentes, faltantes);
+            // Mantener valores legacy por si el frontend los usa, aunque ya no sean weighted
+            puntajeTecnico = total; 
+            puntajeBlando = total;
+            puntajeSeniority = total;
+
+            return (total, puntajeTecnico, puntajeBlando, puntajeSeniority, coincidentes, faltantes, details);
         }
     }
 }

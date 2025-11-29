@@ -58,6 +58,38 @@ namespace SistemaDeGestionTalento.Controllers
                 .ToListAsync();
             stats.VacanciesByStatus = vacanciesByStatus;
 
+            // 5. Supply vs Demand Trend (Last 6 Months)
+            var sixMonthsAgo = DateTime.Now.AddMonths(-6);
+            
+            var vacanciesTrend = await _context.Vacantes
+                .Where(v => v.FechaCreacion >= sixMonthsAgo)
+                .GroupBy(v => new { v.FechaCreacion.Year, v.FechaCreacion.Month })
+                .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count() })
+                .ToListAsync();
+
+            var collaboratorsTrend = await _context.Usuarios
+                .Include(u => u.Rol)
+                .Where(u => u.Rol.Nombre == "Colaborador" && u.FechaCreacion >= sixMonthsAgo)
+                .GroupBy(u => new { u.FechaCreacion.Year, u.FechaCreacion.Month })
+                .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count() })
+                .ToListAsync();
+
+            var trend = new List<TrendItemDto>();
+            for (int i = 0; i < 6; i++)
+            {
+                var date = DateTime.Now.AddMonths(-i);
+                var vCount = vacanciesTrend.FirstOrDefault(x => x.Year == date.Year && x.Month == date.Month)?.Count ?? 0;
+                var cCount = collaboratorsTrend.FirstOrDefault(x => x.Year == date.Year && x.Month == date.Month)?.Count ?? 0;
+                
+                trend.Add(new TrendItemDto 
+                { 
+                    Period = date.ToString("MMM yyyy"), 
+                    Vacancies = vCount, 
+                    Collaborators = cCount 
+                });
+            }
+            stats.SupplyDemandTrend = trend.OrderBy(t => DateTime.Parse(t.Period)).ToList();
+
             return Ok(stats);
         }
     }

@@ -15,8 +15,8 @@ namespace SistemaDeGestionTalento.Core.Entities
         public virtual Usuario Usuario { get; set; } = null!;
 
         [ForeignKey("Vacante")]
-        public int VacanteId { get; set; }
-        public virtual Vacante Vacante { get; set; } = null!;
+        public int? VacanteId { get; set; }
+        public virtual Vacante? Vacante { get; set; }
 
         [Required]
         public string Mensaje { get; set; } = string.Empty;
@@ -24,7 +24,7 @@ namespace SistemaDeGestionTalento.Core.Entities
         public DateTime Fecha { get; set; } = DateTime.Now;
         public bool Leido { get; set; } = false;
 
-        public string Tipo { get; set; } = "General"; // General, Invitacion
+        public string Tipo { get; set; } = "General"; // General, Invitacion, Expulsion
         public string Estado { get; set; } = "Enviada"; // Enviada, Aceptada, Rechazada
     }
 }
